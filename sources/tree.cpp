@@ -235,10 +235,16 @@ static TreeErr parse(Node_t ** node, char ** str, size_t * len) {
     (*len)++;
   }
   if (**str == '(') {
-    parse(&(*node)->left, str, len);
+    TreeErr result = parse(&(*node)->left, str, len);
+    if (result != SUCCESS) {
+      return result;
+    }
   }
   if (**str == '(') {
-    parse(&(*node)->right, str, len);
+    TreeErr result = parse(&(*node)->right, str, len);
+    if (result != SUCCESS) {
+      return result;
+    }
   }
   if (**str == ')') {
     (*str)++;

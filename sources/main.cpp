@@ -10,11 +10,19 @@ TreeErr mainCycle(Tree * tree);
 int main() {
   clear();
   Tree * tree = NULL;
-  getTree("./tree.txt", &tree);
-  TreeErr result = mainCycle(tree);
+
+  TreeErr result = getTree("./tree.txt", &tree);
+  if (result != SUCCESS) {
+    treeDestroy(tree);
+    treeInit(&tree);
+    parseErrors(result);
+  }
+
+  result = mainCycle(tree);
   if (result != SUCCESS) {
     parseErrors(result);
   }
+
   saveTree(tree, "./tree.txt");
   treeDestroy(tree);
   return 0;
