@@ -7,7 +7,7 @@
 #include "check_tree.h"
 
 static Node_t * findElem(Node_t * current, TreeElem_t elem, Node_t ** parent);
-static void DestroyNode(Node_t * node);
+static void DestroyNode(Node_t * node, size_t * len);
 static void PrintNode(Node_t * node, const char * type, FILE * file=stdout);
 static void NodesToArray(Node_t * node, TreeElem_t * array);
 static TreeErr parse(Node_t ** node, char ** str, size_t * len);
@@ -31,7 +31,7 @@ TreeErr treeInit(Tree ** tree) {
 
 TreeErr treeInsert(Tree * tree, Node_t * current, TreeElem_t result, TreeElem_t question, int flag) {
   treeVerify(tree, "BEFORE");
-  tree->len++;
+  tree->len += 2;
   Node_t * tree_elem = tree->root;
   if (tree_elem == NULL) {
     return EMPTY_TREE;
@@ -67,13 +67,12 @@ TreeErr subtreeDelete(Tree * tree, TreeElem_t elem) {
   Node_t * parent = NULL;
   Node_t * current = findElem(tree->root, elem, &parent);
   if (current == NULL) {
-    return INCORRECT_DATA;
+    return DELETE_FAILED;
   }
   if (parent == NULL) {
     treeDestroy(tree);
     treeInit(&tree);
   }
-  printf("%s\n", current->data);
   Node_t * left = parent->left;
   Node_t * right = parent->right;
   if (parent->left == current) {
@@ -81,7 +80,7 @@ TreeErr subtreeDelete(Tree * tree, TreeElem_t elem) {
     parent->data = right->data;
     parent->left = right->left;
     parent->right = right->right;
-    DestroyNode(left);
+    DestroyNode(left, &tree->len);
     free(right);
   }
   else {
@@ -89,7 +88,7 @@ TreeErr subtreeDelete(Tree * tree, TreeElem_t elem) {
     parent->data = left->data;
     parent->left = left->left;
     parent->right = left->right;
-    DestroyNode(right);
+    DestroyNode(right, &tree->len);
     free(left);
   }
   treeVerify(tree, "AFTER");
@@ -120,19 +119,20 @@ static Node_t * findElem(Node_t * current, TreeElem_t elem, Node_t ** parent) {
 }
 
 void treeDestroy(Tree * tree) {
-  DestroyNode(tree->root);
+  DestroyNode(tree->root, &tree->len);
   free(tree);
 }
 
-static void DestroyNode(Node_t * node) {
+static void DestroyNode(Node_t * node, size_t * len) {
   if (node->left != NULL) {
-    DestroyNode(node->left);
+    DestroyNode(node->left, len);
   }
   if (node->right != NULL) {
-    DestroyNode(node->right);
+    DestroyNode(node->right, len);
   }
   free(node->data);
   free(node);
+  (*len)--;
   return;
 }
 
