@@ -6,7 +6,7 @@
 #include "private_tree.h"
 #include "check_tree.h"
 
-static Node_t * findElem(Tree * tree, TreeElem_t elem);
+static Node_t * findElem(Node_t * current, TreeElem_t elem, Node_t ** parent);
 static void DestroyNode(Node_t * node);
 static void PrintNode(Node_t * node, const char * type, FILE * file=stdout);
 static void NodesToArray(Node_t * node, TreeElem_t * array);
@@ -64,26 +64,59 @@ TreeErr treeInsert(Tree * tree, Node_t * current, TreeElem_t result, TreeElem_t 
 
 TreeErr subtreeDelete(Tree * tree, TreeElem_t elem) {
   treeVerify(tree, "BEFORE");
-  Node_t * node = findElem(tree, elem);
-  if (node == NULL) {
-    return DELETE_FAILED;
+  Node_t * parent = NULL;
+  Node_t * current = findElem(tree->root, elem, &parent);
+  if (current == NULL) {
+    return INCORRECT_DATA;
   }
-  DestroyNode(node);
+  if (parent == NULL) {
+    treeDestroy(tree);
+    treeInit(&tree);
+  }
+  printf("%s\n", current->data);
+  Node_t * left = parent->left;
+  Node_t * right = parent->right;
+  if (parent->left == current) {
+    free(parent->data);
+    parent->data = right->data;
+    parent->left = right->left;
+    parent->right = right->right;
+    DestroyNode(left);
+    free(right);
+  }
+  else {
+    free(parent->data);
+    parent->data = left->data;
+    parent->left = left->left;
+    parent->right = left->right;
+    DestroyNode(right);
+    free(left);
+  }
   treeVerify(tree, "AFTER");
   return SUCCESS;
 }
 
-static Node_t * findElem(Tree * tree, TreeElem_t elem) {
-  Node_t * current = tree->root;
-  while (current != NULL && !strcmp(current->data, elem)) {
-    if (strcmp(elem, current->data) <= 0) {
-      current = current->left;
-    }
-    else {
-      current = current->right;
-    }
+static Node_t * findElem(Node_t * current, TreeElem_t elem, Node_t ** parent) {
+  if (current == NULL) {
+    return NULL;
   }
-  return current;
+  if (!strcmp(current->data, elem)) {
+    return current;
+  }
+  if (current->left == NULL || current->right == NULL) {
+    return NULL;
+  }
+  if (!strcmp(current->left->data, elem) || !strcmp(current->right->data, elem)) {
+    *parent = current;
+  }
+  Node_t * left = findElem(current->left, elem, parent);
+  Node_t * right = findElem(current->right, elem, parent);
+  if (left != NULL) {
+    return left;
+  }
+  else {
+    return right;
+  }
 }
 
 void treeDestroy(Tree * tree) {
